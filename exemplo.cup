@@ -1,15 +1,43 @@
 import java_cup.runtime.*;
 
-terminal INTEIRO, MAIS, MENOS, PTVIRG;
+// Declaração do Parser e tratamento de erros
+parser code {:
+  public void report_error(String message, Object info) {
+    System.err.println("Erro sintático: " + message);
+  }
+  public void report_fatal_error(String message, Object info) {
+    report_error(message, info);
+    System.exit(1);
+  }
+:};
 
-non terminal inicio, expr;
+// Terminais (tokens) em português
+terminal Integer INTEIRO;
+terminal MAIS, MENOS, VEZES, DIVISAO, RESTO, POTENCIA;
+terminal PTVIRG, PARENTESQ, PARENTDIR;
 
+// Não-terminais
+non terminal inicio;
+non terminal Integer expr;
+
+// Precedência e Associatividade
+precedence left MAIS, MENOS;
+precedence left VEZES, DIVISAO, RESTO;
+precedence right POTENCIA;
+
+// Gramática
 start with inicio;
 
-inicio ::= expr PTVIRG
+inicio ::= expr:e PTVIRG {: System.out.println("Resultado = " + e); :}
+         | inicio expr:e PTVIRG {: System.out.println("Resultado = " + e); :}
          ;
 
-expr ::= expr MAIS INTEIRO
-       | expr MENOS INTEIRO
-       | INTEIRO
+expr ::= expr:a MAIS expr:b      {: RESULT = a + b; :}
+       | expr:a MENOS expr:b      {: RESULT = a - b; :}
+       | expr:a VEZES expr:b      {: RESULT = a * b; :}
+       | expr:a DIVISAO expr:b    {: if(b==0) { System.err.println("Divisão por zero!"); RESULT=0; } else { RESULT = a / b; } :}
+       | expr:a RESTO expr:b      {: if(b==0) { System.err.println("Módulo por zero!"); RESULT=0; } else { RESULT = a % b; } :}
+       | expr:a POTENCIA expr:b   {: RESULT = (int) Math.pow(a, b); :}
+       | PARENTESQ expr:e PARENTDIR {: RESULT = e; :}
+       | INTEIRO:n                {: RESULT = n; :}
        ;

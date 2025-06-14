@@ -3,19 +3,38 @@ import java_cup.runtime.Symbol;
 %%
 
 %cup
+%line
+%column
 
-digito = [0-9]
-inteiro = {digito}+
+%{
+  private Symbol symbol(int type) {
+    return new Symbol(type, yyline, yycolumn);
+  }
+
+  private Symbol symbol(int type, Object value) {
+    return new Symbol(type, yyline, yycolumn, value);
+  }
+%}
+
+// Expressões Regulares
+LineTerminator = \r|\n|\r\n
+WhiteSpace     = {LineTerminator} | [ \t\f]
+Integer        = [0-9]+
 
 %%
 
-{inteiro} {
-            Integer numero = Integer.valueOf(yytext());
-            return new Symbol(sym.INTEIRO, yyline, yycolumn, numero);
-          }
-"+"       { return new Symbol(sym.MAIS); }
-"-"       { return new Symbol(sym.MENOS); }
-";"       { return new Symbol(sym.PTVIRG); }
-\n        { /* Ignora nova linha. */ }
-[ \t\r]+  { /* Ignora espaços. */ }
-.         { System.err.println("Caractere inválido: " + yytext()); return null; }
+<YYINITIAL> {
+  {Integer}        { return symbol(sym.INTEIRO, new Integer(yytext())); }
+  "+"              { return symbol(sym.MAIS); }
+  "-"              { return symbol(sym.MENOS); }
+  "*"              { return symbol(sym.VEZES); }
+  "/"              { return symbol(sym.DIVISAO); }
+  "%"              { return symbol(sym.RESTO); }
+  "^"              { return symbol(sym.POTENCIA); }
+  ";"              { return symbol(sym.PTVIRG); }
+  "("              { return symbol(sym.PARENTESQ); }
+  ")"              { return symbol(sym.PARENTDIR); }
+  {WhiteSpace}     { /* ignora */ }
+}
+
+[^] { System.err.println("Caractere inválido: <" + yytext() + ">"); }
